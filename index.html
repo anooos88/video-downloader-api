@@ -1,0 +1,79 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>تحميل فيديوهات السوشيال ميديا</title>
+    <style>
+        * { box-sizing: border-box; margin: 0; padding: 0; font-family: system-ui, -apple-system, sans-serif; }
+        body { background-color: #0f172a; color: #f8fafc; min-height: 100vh; display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 20px; }
+        .container { width: 100%; max-width: 500px; background: #1e293b; padding: 30px; border-radius: 16px; box-shadow: 0 10px 25px rgba(0,0,0,0.3); border: 1px solid #334155; }
+        h1 { text-align: center; margin-bottom: 20px; font-size: 22px; color: #38bdf8; }
+        .input-group { display: flex; gap: 10px; margin-bottom: 20px; }
+        input { flex: 1; background: #0f172a; border: 1px solid #475569; color: #fff; padding: 12px 16px; border-radius: 8px; font-size: 14px; outline: none; transition: border-color 0.2s; }
+        input:focus { border-color: #38bdf8; }
+        button { background: #38bdf8; color: #0f172a; border: none; padding: 0 20px; border-radius: 8px; font-weight: bold; cursor: pointer; transition: opacity 0.2s; }
+        button:hover { opacity: 0.9; }
+        #result { margin-top: 20px; }
+        .video-title { font-size: 15px; margin-bottom: 12px; color: #e2e8f0; font-weight: bold; }
+        .format-btn { display: block; background: #334155; color: #fff; text-align: center; padding: 10px; border-radius: 8px; margin-bottom: 8px; text-decoration: none; font-size: 14px; transition: background 0.2s; }
+        .format-btn:hover { background: #475569; color: #38bdf8; }
+        .error { color: #f87171; text-align: center; font-size: 14px; }
+        .loading { text-align: center; color: #94a3b8; font-size: 14px; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>تحميل فيديوهات السوشيال ميديا</h1>
+        <div class="input-group">
+            <input type="text" id="urlInput" placeholder="ألصق رابط الفيديو هنا...">
+            <button onclick="downloadVideo()">تحميل</button>
+        </div>
+        <div id="result"></div>
+    </div>
+
+    <script>
+        const WORKER_URL = 'https://downloadvid-api.anasalali770.workers.dev';
+
+        async function downloadVideo() {
+            const url = document.getElementById('urlInput').value.trim();
+            const resultDiv = document.getElementById('result');
+            
+            if (!url) {
+                resultDiv.innerHTML = '<p class="error">الرجاء إدخال رابط صالح.</p>';
+                return;
+            }
+
+            resultDiv.innerHTML = '<p class="loading">جاري المعالجة واحضار الروابط...</p>';
+
+            try {
+                const response = await fetch(WORKER_URL, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ url })
+                });
+
+                const data = await response.json();
+
+                if (!response.ok || data.error) {
+                    resultDiv.innerHTML = `<p class="error">${data.error || 'حدث خطأ أثناء جلب الفيديو.'}</p>`;
+                    return;
+                }
+
+                let html = `<p class="video-title">${data.title}</p>`;
+                if (data.formats && data.formats.length > 0) {
+                    data.formats.forEach(f => {
+                        html += `<a href="${f.url}" class="format-btn" target="_blank">تحميل: ${f.resolution}</a>`;
+                    });
+                } else {
+                    html += '<p class="error">لم يتم العثور على روابط تحميل متاحة.</p>';
+                }
+
+                resultDiv.innerHTML = html;
+            } catch (err) {
+                resultDiv.innerHTML = '<p class="error">فشل الاتصال بالخادم السحابي.</p>';
+            }
+        }
+    </script>
+</body>
+</html>
