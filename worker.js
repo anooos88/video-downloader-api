@@ -21,7 +21,8 @@ export default {
         });
       }
 
-      const res = await fetch('https://api.cobalt.tools/api/json', {
+      // استخدام الرابط المحدث لخدمة cobalt
+      const res = await fetch('https://co.wuk.sh/api/json', {
         method: 'POST',
         headers: { 
           'Accept': 'application/json', 
@@ -33,7 +34,6 @@ export default {
       
       const data = await res.json();
       
-      // إذا رجعت الـ API خطأ، نقوم بإظهاره للمستخدم
       if (!res.ok || data.status === 'error') {
         return new Response(JSON.stringify({ error: data.text || 'عذراً، لم نتمكن من جلب الفيديو. تأكد من صحة الرابط.' }), { 
           status: 400, 
@@ -56,3 +56,4 @@ export default {
     }
   }
 };
+          
