@@ -29,20 +29,35 @@ export default {
         });
       }
 
-      const cobaltRes = await fetch('https://co.wuk.sh/api/json', {
+      // استخدام نقطة نهاية محدثة ومستقرة لـ cobalt API
+      const cobaltRes = await fetch('https://api.cobalt.tools/api/json', {
         method: 'POST',
         headers: { 
           'Accept': 'application/json', 
           'Content-Type': 'application/json',
-          'User-Agent': 'Mozilla/5.0'
+          'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36'
         },
-        body: JSON.stringify({ url: url })
+        body: JSON.stringify({ 
+          url: url,
+          vQuality: 'max',
+          isAudioOnly: false,
+          dubLang: false
+        })
       });
 
-      const data = await cobaltRes.json();
+      const textResponse = await cobaltRes.text();
+      let data;
+      try {
+        data = JSON.parse(textResponse);
+      } catch (e) {
+        return new Response(JSON.stringify({ error: 'الخادم الخارجي لم يستجب بتنسيق صحيح (خطأ من مصدر الـ API)' }), { 
+          status: 502, 
+          headers: { 'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*' } 
+        });
+      }
 
       if (!cobaltRes.ok || data.status === 'error') {
-        return new Response(JSON.stringify({ error: data.text || 'فشل جلب الفيديو، تأكد من صحة الرابط أو أن المنصة مدعومة.' }), { 
+        return new Response(JSON.stringify({ error: data.text || 'فشل جلب الفيديو، تأكد من أن الرابط مدعوم وعام.' }), { 
           status: 400, 
           headers: { 'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*' } 
         });
@@ -50,7 +65,7 @@ export default {
 
       let formats = [];
       if (data.url) {
-        formats.push({ resolution: 'تحميل مباشر', url: data.url });
+        formats.push({ resolution: 'تحميل مباشر (HD)', url: data.url });
       }
       if (data.picker && Array.isArray(data.picker)) {
         formats = data.picker.map(i => ({ 
@@ -74,4 +89,4 @@ export default {
     }
   }
 };
-                          
+        
