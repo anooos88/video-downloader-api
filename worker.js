@@ -9,36 +9,40 @@ export default {
         } 
       });
     }
-    
+
     try {
-      const body = await request.json();
-      const url = body.url;
-      
-      if (!url || !url.startsWith('http')) {
-        return new Response(JSON.stringify({ error: 'الرجاء إدخال رابط صالح يبدأ بـ http أو https' }), { 
+      let body;
+      try {
+        body = await request.json();
+      } catch (err) {
+        return new Response(JSON.stringify({ error: 'البيانات المرسلة غير صالحة' }), { 
           status: 400, 
           headers: { 'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*' } 
         });
       }
 
-      const res = await fetch('https://co.wuk.sh/api/json', {
+      const url = body && body.url;
+      if (!url || typeof url !== 'string' || !url.startsWith('http')) {
+        return new Response(JSON.stringify({ error: 'الرجاء إدخال رابط صالح يبدأ بـ https://' }), { 
+          status: 400, 
+          headers: { 'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*' } 
+        });
+      }
+
+      const cobaltRes = await fetch('https://co.wuk.sh/api/json', {
         method: 'POST',
         headers: { 
           'Accept': 'application/json', 
           'Content-Type': 'application/json',
-          'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64)'
+          'User-Agent': 'Mozilla/5.0'
         },
-        body: JSON.stringify({ 
-          url: url,
-          vQuality: 'max',
-          isAudioOnly: false
-        })
+        body: JSON.stringify({ url: url })
       });
-      
-      const data = await res.json();
-      
-      if (!res.ok || data.status === 'error') {
-        return new Response(JSON.stringify({ error: data.text || 'عذراً، لم نتمكن من معالجة هذا الرابط.' }), { 
+
+      const data = await cobaltRes.json();
+
+      if (!cobaltRes.ok || data.status === 'error') {
+        return new Response(JSON.stringify({ error: data.text || 'فشل جلب الفيديو، تأكد من صحة الرابط أو أن المنصة مدعومة.' }), { 
           status: 400, 
           headers: { 'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*' } 
         });
@@ -46,27 +50,28 @@ export default {
 
       let formats = [];
       if (data.url) {
-        formats.push({ resolution: 'تحميل مباشر (HD)', url: data.url });
+        formats.push({ resolution: 'تحميل مباشر', url: data.url });
       }
       if (data.picker && Array.isArray(data.picker)) {
         formats = data.picker.map(i => ({ 
-          resolution: i.quality || i.type || 'جودة عالية', 
+          resolution: i.quality || 'جودة عالية', 
           url: i.url 
         }));
       }
 
       return new Response(JSON.stringify({
-        title: data.filename || data.title || 'فيديو سوشيال ميديا',
+        title: data.filename || data.title || 'فيديو جاهز للتحميل',
         formats: formats
       }), { 
         headers: { 'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*' } 
       });
 
     } catch (e) {
-      return new Response(JSON.stringify({ error: 'حدث خطأ تقني في الاتصال بالخادم الداخلي' }), { 
+      return new Response(JSON.stringify({ error: 'خطأ في الخادم: ' + e.message }), { 
         status: 500, 
         headers: { 'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*' } 
       });
     }
   }
 };
+                          
