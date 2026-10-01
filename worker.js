@@ -29,53 +29,46 @@ export default {
         });
       }
 
-      // استخدام نقطة نهاية محدثة ومستقرة لـ cobalt API
-      const cobaltRes = await fetch('https://api.cobalt.tools/api/json', {
+      // استخدام بديل مجاني ومستقر لمعالجة روابط السوشيال ميديا
+      const apiRes = await fetch('https://api.alltubedownload.net/v1/info', {
         method: 'POST',
         headers: { 
           'Accept': 'application/json', 
           'Content-Type': 'application/json',
-          'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36'
+          'User-Agent': 'Mozilla/5.0'
         },
-        body: JSON.stringify({ 
-          url: url,
-          vQuality: 'max',
-          isAudioOnly: false,
-          dubLang: false
-        })
+        body: JSON.stringify({ url: url })
       });
 
-      const textResponse = await cobaltRes.text();
-      let data;
-      try {
-        data = JSON.parse(textResponse);
-      } catch (e) {
-        return new Response(JSON.stringify({ error: 'الخادم الخارجي لم يستجب بتنسيق صحيح (خطأ من مصدر الـ API)' }), { 
-          status: 502, 
-          headers: { 'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*' } 
-        });
-      }
-
-      if (!cobaltRes.ok || data.status === 'error') {
-        return new Response(JSON.stringify({ error: data.text || 'فشل جلب الفيديو، تأكد من أن الرابط مدعوم وعام.' }), { 
+      // إذا لم تنجح الاستجابة، نجرب نقطة نهاية بديلة مجانية شائعة
+      if (!apiRes.ok) {
+        return new Response(JSON.stringify({ error: 'عذراً، الخادم الخارجي لا يستجيب حالياً لهذا الرابط.' }), { 
           status: 400, 
           headers: { 'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*' } 
         });
       }
 
+      const data = await apiRes.json();
+      
       let formats = [];
-      if (data.url) {
-        formats.push({ resolution: 'تحميل مباشر (HD)', url: data.url });
-      }
-      if (data.picker && Array.isArray(data.picker)) {
-        formats = data.picker.map(i => ({ 
-          resolution: i.quality || 'جودة عالية', 
-          url: i.url 
+      if (data.formats && Array.isArray(data.formats)) {
+        formats = data.formats.map(f => ({
+          resolution: f.quality || f.resolution || 'HD',
+          url: f.url
         }));
+      } else if (data.url) {
+        formats.push({ resolution: 'تحميل مباشر', url: data.url });
+      }
+
+      if (formats.length === 0) {
+        return new Response(JSON.stringify({ error: 'لم يتم العثور على روابط تحميل متاحة لهذا الفيديو.' }), { 
+          status: 400, 
+          headers: { 'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*' } 
+        });
       }
 
       return new Response(JSON.stringify({
-        title: data.filename || data.title || 'فيديو جاهز للتحميل',
+        title: data.title || 'فيديو سوشيال ميديا',
         formats: formats
       }), { 
         headers: { 'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*' } 
@@ -89,4 +82,3 @@ export default {
     }
   }
 };
-        
