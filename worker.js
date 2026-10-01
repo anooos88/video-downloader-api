@@ -29,46 +29,52 @@ export default {
         });
       }
 
-      // استخدام بديل مجاني ومستقر لمعالجة روابط السوشيال ميديا
-      const apiRes = await fetch('https://api.alltubedownload.net/v1/info', {
+      // تجربة الاتصال بمثيل عام نشط لـ Cobalt
+      const cobaltRes = await fetch('https://cobalt.k8s.cappuchino.xyz/api/json', {
         method: 'POST',
         headers: { 
           'Accept': 'application/json', 
           'Content-Type': 'application/json',
-          'User-Agent': 'Mozilla/5.0'
+          'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64)'
         },
-        body: JSON.stringify({ url: url })
+        body: JSON.stringify({ 
+          url: url,
+          vQuality: 'max'
+        })
       });
 
-      // إذا لم تنجح الاستجابة، نجرب نقطة نهاية بديلة مجانية شائعة
-      if (!apiRes.ok) {
-        return new Response(JSON.stringify({ error: 'عذراً، الخادم الخارجي لا يستجيب حالياً لهذا الرابط.' }), { 
-          status: 400, 
-          headers: { 'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*' } 
-        });
-      }
-
-      const data = await apiRes.json();
+      const responseText = await cobaltRes.text();
       
-      let formats = [];
-      if (data.formats && Array.isArray(data.formats)) {
-        formats = data.formats.map(f => ({
-          resolution: f.quality || f.resolution || 'HD',
-          url: f.url
-        }));
-      } else if (data.url) {
-        formats.push({ resolution: 'تحميل مباشر', url: data.url });
+      // التأكد من أن الاستجابة تبدأ بـ { أو [ وليست صفحة HTML (تبدأ بـ <)
+      if (!responseText.trim().startsWith('{') && !responseText.trim().startsWith('[')) {
+        return new Response(JSON.stringify({ error: 'الخادم الخارجي للتحميل غير متاح حالياً أو يرفض الطلب.' }), { 
+          status: 502, 
+          headers: { 'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*' } 
+        });
       }
 
-      if (formats.length === 0) {
-        return new Response(JSON.stringify({ error: 'لم يتم العثور على روابط تحميل متاحة لهذا الفيديو.' }), { 
+      const data = JSON.parse(responseText);
+
+      if (!cobaltRes.ok || data.status === 'error') {
+        return new Response(JSON.stringify({ error: data.text || 'فشل معالجة الرابط، تأكد أنه فيديو عام ومدعوم.' }), { 
           status: 400, 
           headers: { 'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*' } 
         });
+      }
+
+      let formats = [];
+      if (data.url) {
+        formats.push({ resolution: 'تحميل مباشر (HD)', url: data.url });
+      }
+      if (data.picker && Array.isArray(data.picker)) {
+        formats = data.picker.map(i => ({ 
+          resolution: i.quality || 'جودة عالية', 
+          url: i.url 
+        }));
       }
 
       return new Response(JSON.stringify({
-        title: data.title || 'فيديو سوشيال ميديا',
+        title: data.filename || data.title || 'فيديو جاهز للتحميل',
         formats: formats
       }), { 
         headers: { 'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*' } 
