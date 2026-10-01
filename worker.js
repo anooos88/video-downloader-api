@@ -14,46 +14,59 @@ export default {
       const body = await request.json();
       const url = body.url;
       
-      if (!url) {
-        return new Response(JSON.stringify({ error: 'الرجاء إدخال الرابط' }), { 
+      if (!url || !url.startsWith('http')) {
+        return new Response(JSON.stringify({ error: 'الرجاء إدخال رابط صالح يبدأ بـ http أو https' }), { 
           status: 400, 
           headers: { 'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*' } 
         });
       }
 
-      // استخدام الرابط المحدث لخدمة cobalt
       const res = await fetch('https://co.wuk.sh/api/json', {
         method: 'POST',
         headers: { 
           'Accept': 'application/json', 
           'Content-Type': 'application/json',
-          'User-Agent': 'Mozilla/5.0'
+          'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64)'
         },
-        body: JSON.stringify({ url: url })
+        body: JSON.stringify({ 
+          url: url,
+          vQuality: 'max',
+          isAudioOnly: false
+        })
       });
       
       const data = await res.json();
       
       if (!res.ok || data.status === 'error') {
-        return new Response(JSON.stringify({ error: data.text || 'عذراً، لم نتمكن من جلب الفيديو. تأكد من صحة الرابط.' }), { 
+        return new Response(JSON.stringify({ error: data.text || 'عذراً، لم نتمكن من معالجة هذا الرابط.' }), { 
           status: 400, 
           headers: { 'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*' } 
         });
       }
 
+      let formats = [];
+      if (data.url) {
+        formats.push({ resolution: 'تحميل مباشر (HD)', url: data.url });
+      }
+      if (data.picker && Array.isArray(data.picker)) {
+        formats = data.picker.map(i => ({ 
+          resolution: i.quality || i.type || 'جودة عالية', 
+          url: i.url 
+        }));
+      }
+
       return new Response(JSON.stringify({
-        title: data.filename || data.title || 'فيديو تحميل',
-        formats: data.url ? [{ resolution: 'تحميل مباشر', url: data.url }] : (data.picker || []).map(i => ({ resolution: i.quality || 'HD', url: i.url }))
+        title: data.filename || data.title || 'فيديو سوشيال ميديا',
+        formats: formats
       }), { 
         headers: { 'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*' } 
       });
 
     } catch (e) {
-      return new Response(JSON.stringify({ error: 'حدث خطأ في الاتصال بالخادم' }), { 
+      return new Response(JSON.stringify({ error: 'حدث خطأ تقني في الاتصال بالخادم الداخلي' }), { 
         status: 500, 
         headers: { 'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*' } 
       });
     }
   }
 };
-          
