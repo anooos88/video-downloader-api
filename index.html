@@ -5,43 +5,38 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
   <title>VideoDown - تحميل الفيديوهات</title>
-  <meta name="description" content="تحميل الفيديوهات من أشهر منصات التواصل الاجتماعي بسهولة وسرعة.">
 
   <style>
     * {
       box-sizing: border-box;
-      margin: 0;
-      padding: 0;
     }
 
     body {
-      min-height: 100vh;
-      font-family: Arial, Tahoma, sans-serif;
+      margin: 0;
+      font-family: Arial, sans-serif;
       background:
-        radial-gradient(circle at top, #24304f 0%, #111827 38%, #070b14 100%);
-      color: #fff;
-      display: flex;
-      flex-direction: column;
+        radial-gradient(circle at top left, #1f2937, transparent 40%),
+        linear-gradient(135deg, #0f172a, #020617);
+      color: white;
+      min-height: 100vh;
     }
 
     header {
-      width: 100%;
+      max-width: 1000px;
+      margin: auto;
       padding: 20px;
       display: flex;
       justify-content: space-between;
       align-items: center;
-      max-width: 1100px;
-      margin: auto;
     }
 
     .logo {
-      font-size: 25px;
-      font-weight: 800;
-      letter-spacing: .5px;
+      font-size: 28px;
+      font-weight: bold;
     }
 
     .logo span {
-      color: #5eead4;
+      color: #38bdf8;
     }
 
     .language-btn {
@@ -60,124 +55,103 @@
       transform: translateY(-1px);
     }
 
-    main {
-      width: 100%;
-      max-width: 900px;
-      margin: auto;
-      padding: 35px 18px 50px;
+    .container {
+      width: 92%;
+      max-width: 760px;
+      margin: 60px auto;
       text-align: center;
     }
 
-    .hero h1 {
-      font-size: clamp(34px, 7vw, 62px);
-      line-height: 1.1;
-      margin-bottom: 18px;
+    h1 {
+      font-size: 42px;
+      margin-bottom: 12px;
     }
 
-    .hero h1 span {
-      color: #5eead4;
-    }
-
-    .hero p {
-      color: #b8c1d1;
-      font-size: 17px;
-      line-height: 1.8;
-      max-width: 650px;
-      margin: auto;
+    .subtitle {
+      color: #94a3b8;
+      margin-bottom: 35px;
+      font-size: 16px;
     }
 
     .download-box {
-      margin: 35px auto 20px;
-      max-width: 720px;
-      background: rgba(255,255,255,.07);
-      border: 1px solid rgba(255,255,255,.12);
-      border-radius: 22px;
-      padding: 20px;
-      backdrop-filter: blur(15px);
-      box-shadow: 0 20px 70px rgba(0,0,0,.25);
+      background: rgba(255,255,255,.06);
+      border: 1px solid rgba(255,255,255,.1);
+      border-radius: 20px;
+      padding: 25px;
+      backdrop-filter: blur(12px);
+      box-shadow: 0 20px 50px rgba(0,0,0,.25);
     }
 
     .url-input {
       width: 100%;
-      height: 58px;
-      border: 1px solid rgba(255,255,255,.14);
+      padding: 17px;
+      border-radius: 14px;
+      border: 1px solid rgba(255,255,255,.12);
       background: rgba(0,0,0,.25);
       color: white;
-      border-radius: 14px;
-      padding: 0 18px;
-      font-size: 16px;
       outline: none;
+      font-size: 16px;
       direction: ltr;
-      text-align: left;
     }
 
     .url-input:focus {
-      border-color: #5eead4;
-      box-shadow: 0 0 0 3px rgba(94,234,212,.08);
+      border-color: #38bdf8;
     }
 
     .controls {
       display: flex;
       gap: 12px;
-      margin-top: 13px;
+      margin-top: 15px;
     }
 
     .quality {
-      flex: 0 0 140px;
-      height: 55px;
+      flex: 1;
+      padding: 15px;
+      border-radius: 12px;
       border: 1px solid rgba(255,255,255,.12);
-      border-radius: 13px;
-      background: rgba(0,0,0,.25);
+      background: #111827;
       color: white;
-      padding: 0 12px;
       font-size: 15px;
       outline: none;
     }
 
-    .quality option {
-      background: #111827;
-      color: white;
-    }
-
     .download-btn {
-      flex: 1;
-      height: 55px;
-      border: 0;
-      border-radius: 13px;
-      background: linear-gradient(135deg, #5eead4, #22c55e);
-      color: #07111a;
-      font-weight: 800;
+      flex: 2;
+      border: none;
+      border-radius: 12px;
+      padding: 15px;
+      background: linear-gradient(135deg, #0ea5e9, #2563eb);
+      color: white;
       font-size: 16px;
+      font-weight: bold;
       cursor: pointer;
       transition: .2s;
     }
 
     .download-btn:hover {
-      transform: translateY(-2px);
-      box-shadow: 0 10px 30px rgba(34,197,94,.22);
+      transform: translateY(-1px);
+      box-shadow: 0 10px 25px rgba(37,99,235,.3);
     }
 
     .download-btn:disabled {
       opacity: .6;
       cursor: not-allowed;
       transform: none;
-      box-shadow: none;
     }
 
     .loading {
       display: none;
-      margin: 22px auto 0;
-      color: #b8c1d1;
+      margin-top: 25px;
     }
 
     .spinner {
-      width: 28px;
-      height: 28px;
-      border: 3px solid rgba(255,255,255,.15);
-      border-top-color: #5eead4;
+      width: 35px;
+      height: 35px;
+      border: 4px solid rgba(255,255,255,.2);
+      border-top-color: #38bdf8;
       border-radius: 50%;
-      animation: spin .8s linear infinite;
-      margin: 0 auto 10px;
+      animation: spin 1s linear infinite;
+      margin: auto;
     }
 
     @keyframes spin {
@@ -187,943 +161,29 @@
     }
 
     .message {
+      margin-top: 20px;
+      padding: 14px;
+      border-radius: 12px;
       display: none;
-      margin: 20px auto 0;
-      padding: 15px;
-      border-radius: 14px;
-      line-height: 1.7;
-      max-width: 720px;
-    }
-
-    .message.error {
-      background: rgba(239,68,68,.10);
-      border: 1px solid rgba(239,68,68,.25);
-      color: #fecaca;
+      font-size: 14px;
     }
 
     .message.success {
-      background: rgba(34,197,94,.10);
+      display: block;
+      background: rgba(34,197,94,.12);
       border: 1px solid rgba(34,197,94,.25);
-      color: #bbf7d0;
+      color: #86efac;
+    }
+
+    .message.error {
+      display: block;
+      background: rgba(239,68,68,.12);
+      border: 1px solid rgba(239,68,68,.25);
+      color: #fca5a5;
     }
 
     .result {
       display: none;
-      margin: 20px auto 0;
+      margin-top: 25px;
       padding: 20px;
-      border-radius: 18px;
-      background: rgba(255,255,255,.07);
-      border: 1px solid rgba(94,234,212,.2);
-    }
-
-    .result h3 {
-      margin-bottom: 10px;
-      color: #5eead4;
-    }
-
-    .filename {
-      color: #cbd5e1;
-      font-size: 14px;
-      margin-bottom: 15px;
-      word-break: break-word;
-    }
-
-    .download-result {
-      display: inline-flex;
-      align-items: center;
-      justify-content: center;
-      text-decoration: none;
-      min-width: 220px;
-      padding: 13px 22px;
-      border-radius: 12px;
-      background: #5eead4;
-      color: #07111a;
-      font-weight: 800;
-      transition: .2s;
-    }
-
-    .download-result:hover {
-      transform: translateY(-2px);
-    }
-
-    .platforms {
-      margin-top: 45px;
-    }
-
-    .platforms h2 {
-      font-size: 20px;
-      margin-bottom: 20px;
-    }
-
-    .badges {
-      display: flex;
-      flex-wrap: wrap;
-      justify-content: center;
-      gap: 10px;
-    }
-
-    .badge {
-      padding: 9px 14px;
-      border-radius: 30px;
-      background: rgba(255,255,255,.07);
-      border: 1px solid rgba(255,255,255,.09);
-      color: #cbd5e1;
-      font-size: 13px;
-    }
-
-    footer {
-      margin-top: auto;
-      padding: 25px 15px;
-      text-align: center;
-      color: #8792a7;
-      font-size: 14px;
-      line-height: 1.8;
-    }
-
-    .designer {
-      color: #5eead4;
-      text-decoration: none;
-      font-weight: 700;
-    }
-
-    .designer:hover {
-      text-decoration: underline;
-    }
-
-    @media (max-width: 600px) {
-
-      header {
-        padding: 16px;
-      }
-
-      .logo {
-        font-size: 21px;
-      }
-
-      main {
-        padding-top: 25px;
-      }
-
-      .hero p {
-        font-size: 15px;
-      }
-
-      .download-box {
-        padding: 14px;
-      }
-
-      .controls {
-        flex-direction: column;
-      }
-
-      .quality {
-        flex: none;
-        width: 100%;
-      }
-
-      .download-btn {
-        width: 100%;
-      }
-    }
-  </style>
-</head>
-
-<body>
-
-<header>
-
-  <div class="logo">
-    Video<span>Down</span>
-  </div>
-
-  <button
-    class="language-btn"
-    id="languageBtn"
-    type="button"
-    onclick="toggleLanguage()"
-  >
-    English
-  </button>
-
-</header>
-
-
-<main>
-
-  <section class="hero">
-
-    <h1 id="title">
-      حمّل الفيديوهات <span>بسهولة</span>
-    </h1>
-
-    <p id="description">
-      أدخل رابط الفيديو من المنصة التي تريدها، واختر الجودة، ثم اضغط تحميل.
-    </p>
-
-  </section>
-
-
-  <section class="download-box">
-
-    <input
-      id="urlInput"
-      class="url-input"
-      type="url"
-      autocomplete="off"
-      placeholder="ألصق رابط الفيديو هنا..."
-    >
-
-    <div class="controls">
-
-      <select id="quality" class="quality">
-
-        <option value="720">720p</option>
-        <option value="1080">1080p</option>
-        <option value="480">480p</option>
-        <option value="360">360p</option>
-
-      </select>
-
-      <button
-        id="downloadBtn"
-        class="download-btn"
-        type="button"
-        onclick="downloadVideo()"
-      >
-        تحميل الفيديو
-      </button>
-
-    </div>
-
-
-    <div id="loading" class="loading">
-
-      <div class="spinner"></div>
-
-      <div id="loadingText">
-        جاري معالجة الفيديو...
-      </div>
-
-    </div>
-
-
-    <div id="message" class="message"></div>
-
-
-    <div id="result" class="result">
-
-      <h3 id="resultTitle">
-        الفيديو جاهز
-      </h3>
-
-      <div id="filename" class="filename"></div>
-
-      <a
-        id="downloadLink"
-        class="download-result"
-        href="#"
-        target="_blank"
-        rel="noopener noreferrer"
-      >
-        تنزيل الفيديو
-      </a>
-
-    </div>
-
-  </section>
-
-
-  <section class="platforms">
-
-    <h2 id="platformTitle">
-      المنصات المدعومة
-    </h2>
-
-    <div class="badges">
-
-      <div class="badge">TikTok</div>
-      <div class="badge">Facebook</div>
-      <div class="badge">Instagram</div>
-      <div class="badge">YouTube</div>
-      <div class="badge">X / Twitter</div>
-      <div class="badge">Reddit</div>
-      <div class="badge">Pinterest</div>
-      <div class="badge">Vimeo</div>
-      <div class="badge">Twitch</div>
-
-    </div>
-
-  </section>
-
-</main>
-
-
-<footer>
-
-  <span id="designedText">
-    صمم بواسطة
-  </span>
-
-  &nbsp;
-
-  <a
-    class="designer"
-    href="https://www.facebook.com/anas.alali.79"
-    target="_blank"
-    rel="noopener noreferrer"
-  >
-    <span id="designerName">
-      أنس العلي
-    </span>
-  </a>
-
-  <br>
-
-  <span>
-    VideoDown © 2026
-  </span>
-
-</footer>
-
-
-<script>
-
-const WORKER_URL =
-  "https://video-downloaders-api.anasalali770.workers.dev";
-
-
-let currentLanguage = "ar";
-
-
-const translations = {
-
-  ar: {
-
-    language: "English",
-
-    title:
-      'حمّل الفيديوهات <span>بسهولة</span>',
-
-    description:
-      "أدخل رابط الفيديو من المنصة التي تريدها، واختر الجودة، ثم اضغط تحميل.",
-
-    placeholder:
-      "ألصق رابط الفيديو هنا...",
-
-    download:
-      "تحميل الفيديو",
-
-    loading:
-      "جاري معالجة الفيديو...",
-
-    result:
-      "الفيديو جاهز",
-
-    downloadResult:
-      "تنزيل الفيديو",
-
-    platformTitle:
-      "المنصات المدعومة",
-
-    designed:
-      "صمم بواسطة",
-
-    designer:
-      "أنس العلي",
-
-    empty:
-      "يرجى إدخال رابط الفيديو أولاً.",
-
-    invalid:
-      "يرجى إدخال رابط فيديو صحيح.",
-
-    processing:
-      "جاري معالجة الفيديو...",
-
-    serverError:
-      "حدث خطأ أثناء الاتصال بالخادم.",
-
-    noUrl:
-      "لم يرجع الخادم رابط تنزيل للفيديو.",
-
-    youtube:
-      "YouTube غير متاح حاليًا بسبب مشكلة في جلسة YouTube على خادم Cobalt. جرّب TikTok أو Facebook.",
-
-    cobaltError:
-      "حدث خطأ أثناء معالجة الفيديو.",
-
-    ready:
-      "تم تجهيز الفيديو بنجاح."
-
-  },
-
-
-  en: {
-
-    language: "العربية",
-
-    title:
-      'Download Videos <span>Easily</span>',
-
-    description:
-      "Paste your video URL, choose the quality, and click download.",
-
-    placeholder:
-      "Paste video URL here...",
-
-    download:
-      "Download Video",
-
-    loading:
-      "Processing video...",
-
-    result:
-      "Video Ready",
-
-    downloadResult:
-      "Download Video",
-
-    platformTitle:
-      "Supported Platforms",
-
-    designed:
-      "Designed by",
-
-    designer:
-      "Anas Alali",
-
-    empty:
-      "Please enter a video URL first.",
-
-    invalid:
-      "Please enter a valid video URL.",
-
-    processing:
-      "Processing video...",
-
-    serverError:
-      "An error occurred while connecting to the server.",
-
-    noUrl:
-      "The server did not return a download URL.",
-
-    youtube:
-      "YouTube is currently unavailable because of a YouTube session issue on the Cobalt server. Try TikTok or Facebook.",
-
-    cobaltError:
-      "An error occurred while processing the video.",
-
-    ready:
-      "The video is ready."
-
-  }
-
-};
-
-
-function toggleLanguage() {
-
-  currentLanguage =
-    currentLanguage === "ar"
-      ? "en"
-      : "ar";
-
-  const t =
-    translations[currentLanguage];
-
-
-  document.documentElement.lang =
-    currentLanguage;
-
-  document.documentElement.dir =
-    currentLanguage === "ar"
-      ? "rtl"
-      : "ltr";
-
-
-  document.getElementById("languageBtn")
-    .textContent = t.language;
-
-
-  document.getElementById("title")
-    .innerHTML = t.title;
-
-
-  document.getElementById("description")
-    .textContent = t.description;
-
-
-  document.getElementById("urlInput")
-    .placeholder = t.placeholder;
-
-
-  document.getElementById("downloadBtn")
-    .textContent = t.download;
-
-
-  document.getElementById("loadingText")
-    .textContent = t.loading;
-
-
-  document.getElementById("resultTitle")
-    .textContent = t.result;
-
-
-  document.getElementById("downloadLink")
-    .textContent = t.downloadResult;
-
-
-  document.getElementById("platformTitle")
-    .textContent = t.platformTitle;
-
-
-  document.getElementById("designedText")
-    .textContent = t.designed;
-
-
-  document.getElementById("designerName")
-    .textContent = t.designer;
-
-}
-
-
-
-function showMessage(text, type = "error") {
-
-  const message =
-    document.getElementById("message");
-
-  message.textContent = text;
-
-  message.className =
-    "message " + type;
-
-  message.style.display = "block";
-
-}
-
-
-
-function hideMessage() {
-
-  const message =
-    document.getElementById("message");
-
-  message.style.display = "none";
-
-}
-
-
-
-function showLoading(show) {
-
-  const loading =
-    document.getElementById("loading");
-
-  const button =
-    document.getElementById("downloadBtn");
-
-  loading.style.display =
-    show ? "block" : "none";
-
-  button.disabled =
-    show;
-
-}
-
-
-
-function hideResult() {
-
-  document.getElementById("result")
-    .style.display = "none";
-
-}
-
-
-
-function detectYouTube(url) {
-
-  const text =
-    url.toLowerCase();
-
-  return (
-    text.includes("youtube.com") ||
-    text.includes("youtu.be")
-  );
-
-}
-
-
-
-async function downloadVideo() {
-
-  const t =
-    translations[currentLanguage];
-
-
-  const input =
-    document.getElementById("urlInput");
-
-
-  const quality =
-    document.getElementById("quality")
-      .value;
-
-
-  const url =
-    input.value.trim();
-
-
-  hideMessage();
-
-  hideResult();
-
-
-  if (!url) {
-
-    showMessage(t.empty);
-
-    input.focus();
-
-    return;
-
-  }
-
-
-  try {
-
-    new URL(url);
-
-  } catch {
-
-    showMessage(t.invalid);
-
-    input.focus();
-
-    return;
-
-  }
-
-
-  /*
-   * YouTube currently returns:
-   * error.api.youtube.login
-   *
-   * We let the request reach Cobalt,
-   * but provide a clearer message below.
-   */
-
-
-  showLoading(true);
-
-
-  try {
-
-    const response =
-      await fetch(
-
-        WORKER_URL,
-
-        {
-
-          method: "POST",
-
-          headers: {
-
-            "Content-Type":
-              "application/json",
-
-            "Accept":
-              "application/json"
-
-          },
-
-          body: JSON.stringify({
-
-            url: url,
-
-            quality: quality
-
-          })
-
-        }
-
-      );
-
-
-    const raw =
-      await response.text();
-
-
-    let data;
-
-
-    try {
-
-      data =
-        JSON.parse(raw);
-
-    } catch {
-
-      throw new Error(
-        "Invalid server response"
-      );
-
-    }
-
-
-    console.log(
-      "Worker response:",
-      data
-    );
-
-
-    /*
-     * Worker wraps Cobalt response
-     * inside:
-     *
-     * {
-     *   success: true,
-     *   cobalt: {...}
-     * }
-     */
-
-
-    const cobalt =
-      data.cobalt || data;
-
-
-    /*
-     * Handle YouTube login error
-     */
-
-    if (
-
-      cobalt?.error?.code ===
-      "error.api.youtube.login"
-
-      ||
-
-      data?.cobaltResponse?.error?.code ===
-      "error.api.youtube.login"
-
-    ) {
-
-      showMessage(
-        t.youtube,
-        "error"
-      );
-
-      return;
-
-    }
-
-
-    /*
-     * Generic Cobalt error
-     */
-
-    if (
-
-      cobalt.status === "error"
-
-      ||
-
-      data.error ===
-      "Cobalt processing error"
-
-    ) {
-
-      const errorCode =
-        cobalt?.error?.code ||
-        data?.cobaltResponse?.error?.code ||
-        "";
-
-      if (
-        errorCode ===
-        "error.api.youtube.login"
-      ) {
-
-        showMessage(
-          t.youtube,
-          "error"
-        );
-
-      } else {
-
-        showMessage(
-          errorCode
-            ? t.cobaltError +
-              " (" +
-              errorCode +
-              ")"
-            : t.cobaltError
-        );
-
-      }
-
-      return;
-
-    }
-
-
-    /*
-     * Successful tunnel / redirect
-     */
-
-    if (
-
-      cobalt.status === "tunnel"
-
-      ||
-
-      cobalt.status === "redirect"
-
-    ) {
-
-      if (!cobalt.url) {
-
-        showMessage(t.noUrl);
-
-        return;
-
-      }
-
-
-      const filename =
-        cobalt.filename ||
-        "video.mp4";
-
-
-      document.getElementById("filename")
-        .textContent =
-        filename;
-
-
-      const downloadLink =
-        document.getElementById("downloadLink");
-
-
-      downloadLink.href =
-        cobalt.url;
-
-
-      downloadLink.download =
-        filename;
-
-
-      document.getElementById("result")
-        .style.display = "block";
-
-
-      showMessage(
-        t.ready,
-        "success"
-      );
-
-
-      return;
-
-    }
-
-
-    /*
-     * Some Cobalt versions can return
-     * a picker.
-     *
-     * We show a useful message rather
-     * than silently failing.
-     */
-
-    if (cobalt.status === "picker") {
-
-      showMessage(
-        currentLanguage === "ar"
-          ? "الفيديو يحتوي على عدة خيارات. إصدار الواجهة الحالي يحتاج إلى دعم اختيار الملف."
-          : "This video has multiple download options. The current interface needs picker support."
-      );
-
-      return;
-
-    }
-
-
-    /*
-     * HTTP error from Worker
-     */
-
-    if (!response.ok) {
-
-      const details =
-        cobalt?.error?.code ||
-        data?.cobaltResponse?.error?.code ||
-        data?.message ||
-        "";
-
-
-      showMessage(
-        details
-          ? t.cobaltError +
-            " (" +
-            details +
-            ")"
-          : t.serverError
-      );
-
-      return;
-
-    }
-
-
-    showMessage(
-      t.noUrl
-    );
-
-
-  } catch (error) {
-
-    console.error(
-      "Download error:",
-      error
-    );
-
-
-    showMessage(
-      t.serverError
-    );
-
-
-  } finally {
-
-    showLoading(false);
-
-  }
-
-}
-
-
-
-/*
- * Allow pressing Enter
- */
-
-document
-  .getElementById("urlInput")
-  .addEventListener(
-    "keydown",
-    function(event) {
-
-      if (event.key === "Enter") {
-
-        downloadVideo();
-
-      }
-
-    }
-  );
-
-</script>
-
-</body>
-  </html>
+      background
