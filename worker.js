@@ -3,10 +3,6 @@ const COBALT_API_URL = "https://cobalt.anas.blitz.cloud/";
 export default {
   async fetch(request, env) {
 
-    // =========================
-    // CORS
-    // =========================
-
     const corsHeaders = {
       "Access-Control-Allow-Origin": "*",
       "Access-Control-Allow-Methods": "POST, OPTIONS",
@@ -14,10 +10,7 @@ export default {
       "Content-Type": "application/json"
     };
 
-    // =========================
-    // OPTIONS
-    // =========================
-
+    // CORS preflight
     if (request.method === "OPTIONS") {
       return new Response(null, {
         status: 204,
@@ -25,14 +18,10 @@ export default {
       });
     }
 
-    // =========================
-    // POST فقط
-    // =========================
-
     if (request.method !== "POST") {
       return new Response(
         JSON.stringify({
-          error: "Only POST requests are allowed"
+          error: "Only POST is allowed"
         }),
         {
           status: 405,
@@ -43,18 +32,13 @@ export default {
 
     try {
 
-      // =========================
-      // قراءة الطلب
-      // =========================
+      // Read incoming JSON
+      const input = await request.json();
 
-      let body;
-
-      try {
-        body = await request.json();
-      } catch {
+      if (!input.url) {
         return new Response(
           JSON.stringify({
-            error: "Invalid JSON"
+            error: "Missing url"
           }),
           {
             status: 400,
@@ -63,74 +47,51 @@ export default {
         );
       }
 
-      const targetUrl = body.url;
-      const quality = body.quality || "720";
+      const quality =
+        input.quality || "720";
 
-      if (!targetUrl) {
-        return new Response(
-          JSON.stringify({
-            error: "Missing video URL"
-          }),
-          {
-            status: 400,
-            headers: corsHeaders
-          }
-        );
-      }
-
-      // =========================
-      // Cobalt request
-      // =========================
+      // --------------------------------
+      // Minimal Cobalt request
+      // --------------------------------
 
       const cobaltBody = {
-        url: targetUrl,
-
-        videoQuality: quality,
-
-        audioFormat: "best",
-        audioBitrate: "128",
-
-        filenameStyle: "pretty",
-
-        downloadMode: "auto",
-
-        disableMetadata: false,
-
-        alwaysProxy: false,
-
-        localProcessing: "disabled",
-
-        // YouTube
-        youtubeVideoCodec: "h264",
-        youtubeVideoContainer: "mp4",
-        youtubeHLS: false,
-
-        // TikTok
-        tiktokFullAudio: false,
-        allowH265: false,
-
-        // Twitter
-        convertGif: true
+        url: input.url,
+        videoQuality: quality
       };
 
-      // =========================
-      // Headers المطلوبة رسميًا
-      // =========================
+      // --------------------------------
+      // IMPORTANT:
+      // Build Headers explicitly
+      // --------------------------------
 
-      const cobaltHeaders = {
-        "Accept": "application/json",
-        "Content-Type": "application/json"
-      };
+      const cobaltHeaders = new Headers();
 
-      // API Key اختياري
+      cobaltHeaders.set(
+        "Accept",
+        "application/json"
+      );
+
+      cobaltHeaders.set(
+        "Content-Type",
+        "application/json"
+      );
+
+      cobaltHeaders.set(
+        "User-Agent",
+        "Mozilla/5.0"
+      );
+
+      // API key only if configured
       if (env.COBALT_API_KEY) {
-        cobaltHeaders["Authorization"] =
-          `Api-Key ${env.COBALT_API_KEY}`;
+        cobaltHeaders.set(
+          "Authorization",
+          `Api-Key ${env.COBALT_API_KEY}`
+        );
       }
 
-      // =========================
-      // إرسال الطلب إلى Cobalt
-      // =========================
+      // --------------------------------
+      // Send request to Cobalt
+      // --------------------------------
 
       const cobaltResponse = await fetch(
         COBALT_API_URL,
@@ -141,25 +102,24 @@ export default {
         }
       );
 
-      // =========================
-      // قراءة الاستجابة
-      // =========================
+      // --------------------------------
+      // Read Cobalt response
+      // --------------------------------
 
-      const responseText =
+      const raw =
         await cobaltResponse.text();
 
       let cobaltData;
 
       try {
-        cobaltData =
-          JSON.parse(responseText);
+        cobaltData = JSON.parse(raw);
       } catch {
 
         return new Response(
           JSON.stringify({
-            error: "Cobalt returned invalid JSON",
-            cobaltStatus: cobaltResponse.status,
-            response: responseText
+            error: "Cobalt returned non-JSON",
+            httpStatus: cobaltResponse.status,
+            raw: raw
           }),
           {
             status: 502,
@@ -168,9 +128,9 @@ export default {
         );
       }
 
-      // =========================
-      // Cobalt error
-      // =========================
+      // --------------------------------
+      // Cobalt HTTP error
+      // --------------------------------
 
       if (!cobaltResponse.ok) {
 
@@ -187,9 +147,9 @@ export default {
         );
       }
 
-      // =========================
-      // Cobalt status = error
-      // =========================
+      // --------------------------------
+      // Cobalt processing error
+      // --------------------------------
 
       if (cobaltData.status === "error") {
 
@@ -205,9 +165,9 @@ export default {
         );
       }
 
-      // =========================
-      // نجاح
-      // =========================
+      // --------------------------------
+      // SUCCESS
+      // --------------------------------
 
       return new Response(
         JSON.stringify({
@@ -222,13 +182,9 @@ export default {
 
     } catch (error) {
 
-      // =========================
-      // Worker error
-      // =========================
-
       return new Response(
         JSON.stringify({
-          error: "Worker error",
+          error: "Worker exception",
           message: error.message
         }),
         {
