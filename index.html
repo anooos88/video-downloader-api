@@ -807,11 +807,10 @@ async function downloadVideo() {
 
 
   /*
-   * YouTube currently returns:
-   * error.api.youtube.login
-   *
-   * We let the request reach Cobalt,
-   * but provide a clearer message below.
+   * YouTube session is now working on Cobalt.
+   * The Worker may still return the old
+   * YouTube login error, so we retry directly
+   * against Cobalt in that specific case.
    */
 
 
@@ -895,7 +894,11 @@ async function downloadVideo() {
 
 
     /*
-     * Handle YouTube login error
+     * Handle YouTube login error.
+     *
+     * Cobalt itself has already been tested
+     * successfully, so retry directly against
+     * Cobalt instead of showing the old message.
      */
 
     if (
@@ -910,12 +913,163 @@ async function downloadVideo() {
 
     ) {
 
-      showMessage(
-        t.youtube,
-        "error"
-      );
+      try {
 
-      return;
+        const directResponse =
+          await fetch(
+            "https://cobalt.anas.blitz.cloud/",
+            {
+              method: "POST",
+
+              headers: {
+                "Content-Type":
+                  "application/json",
+
+                "Accept":
+                  "application/json"
+              },
+
+              body: JSON.stringify({
+                url: url,
+                videoQuality: quality
+              })
+            }
+          );
+
+
+        const directRaw =
+          await directResponse.text();
+
+
+        let directData;
+
+
+        try {
+
+          directData =
+            JSON.parse(directRaw);
+
+        } catch {
+
+          throw new Error(
+            "Invalid Cobalt response"
+          );
+
+        }
+
+
+        console.log(
+          "Direct Cobalt response:",
+          directData
+        );
+
+
+        /*
+         * Direct Cobalt success
+         */
+
+        if (
+
+          directData.status === "tunnel"
+
+          ||
+
+          directData.status === "redirect"
+
+        ) {
+
+          if (!directData.url) {
+
+            showMessage(t.noUrl);
+
+            return;
+
+          }
+
+
+          const filename =
+            directData.filename ||
+            "video.mp4";
+
+
+          document.getElementById("filename")
+            .textContent =
+            filename;
+
+
+          const downloadLink =
+            document.getElementById("downloadLink");
+
+
+          downloadLink.href =
+            directData.url;
+
+
+          downloadLink.download =
+            filename;
+
+
+          document.getElementById("result")
+            .style.display =
+            "block";
+
+
+          showMessage(
+            t.ready,
+            "success"
+          );
+
+
+          return;
+
+        }
+
+
+        /*
+         * Direct Cobalt error
+         */
+
+        if (directData.status === "error") {
+
+          const directError =
+            directData?.error?.code ||
+            "";
+
+
+          showMessage(
+            directError
+              ? t.cobaltError +
+                " (" +
+                directError +
+                ")"
+              : t.youtube
+          );
+
+          return;
+
+        }
+
+
+        showMessage(t.noUrl);
+
+        return;
+
+      } catch (directError) {
+
+        console.error(
+          "Direct Cobalt YouTube retry error:",
+          directError
+        );
+
+
+        showMessage(
+          t.youtube,
+          "error"
+        );
+
+        return;
+
+      }
 
     }
 
@@ -1014,7 +1168,8 @@ async function downloadVideo() {
 
 
       document.getElementById("result")
-        .style.display = "block";
+        .style.display =
+        "block";
 
 
       showMessage(
@@ -1116,14 +1271,4 @@ document
 
       if (event.key === "Enter") {
 
-        downloadVideo();
-
-      }
-
-    }
-  );
-
-</script>
-
-</body>
-  </html>
+        do
