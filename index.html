@@ -1,6 +1,69 @@
 <!DOCTYPE html>
 <html lang="ar" dir="rtl">
-<head      margin: auto;
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+  <title>VideoDown - تحميل الفيديوهات</title>
+  <meta name="description" content="تحميل الفيديوهات من أشهر منصات التواصل الاجتماعي بسهولة وسرعة.">
+
+  <style>
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    body {
+      min-height: 100vh;
+      font-family: Arial, Tahoma, sans-serif;
+      background:
+        radial-gradient(circle at top, #24304f 0%, #111827 38%, #070b14 100%);
+      color: #fff;
+      display: flex;
+      flex-direction: column;
+    }
+
+    header {
+      width: 100%;
+      padding: 20px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      max-width: 1100px;
+      margin: auto;
+    }
+
+    .logo {
+      font-size: 25px;
+      font-weight: 800;
+      letter-spacing: .5px;
+    }
+
+    .logo span {
+      color: #5eead4;
+    }
+
+    .language-btn {
+      border: 1px solid rgba(255,255,255,.15);
+      background: rgba(255,255,255,.08);
+      color: white;
+      padding: 9px 15px;
+      border-radius: 12px;
+      cursor: pointer;
+      font-size: 14px;
+      transition: .2s;
+    }
+
+    .language-btn:hover {
+      background: rgba(255,255,255,.15);
+      transform: translateY(-1px);
+    }
+
+    main {
+      width: 100%;
+      max-width: 900px;
+      margin: auto;
       padding: 35px 18px 50px;
       text-align: center;
     }
@@ -744,10 +807,11 @@ async function downloadVideo() {
 
 
   /*
-   * YouTube session is now working on Cobalt.
-   * The Worker may still return the old
-   * YouTube login error, so we retry directly
-   * against Cobalt in that specific case.
+   * YouTube currently returns:
+   * error.api.youtube.login
+   *
+   * We let the request reach Cobalt,
+   * but provide a clearer message below.
    */
 
 
@@ -831,11 +895,7 @@ async function downloadVideo() {
 
 
     /*
-     * Handle YouTube login error.
-     *
-     * Cobalt itself has already been tested
-     * successfully, so retry directly against
-     * Cobalt instead of showing the old message.
+     * Handle YouTube login error
      */
 
     if (
@@ -850,163 +910,12 @@ async function downloadVideo() {
 
     ) {
 
-      try {
+      showMessage(
+        t.youtube,
+        "error"
+      );
 
-        const directResponse =
-          await fetch(
-            "https://cobalt.anas.blitz.cloud/",
-            {
-              method: "POST",
-
-              headers: {
-                "Content-Type":
-                  "application/json",
-
-                "Accept":
-                  "application/json"
-              },
-
-              body: JSON.stringify({
-                url: url,
-                videoQuality: quality
-              })
-            }
-          );
-
-
-        const directRaw =
-          await directResponse.text();
-
-
-        let directData;
-
-
-        try {
-
-          directData =
-            JSON.parse(directRaw);
-
-        } catch {
-
-          throw new Error(
-            "Invalid Cobalt response"
-          );
-
-        }
-
-
-        console.log(
-          "Direct Cobalt response:",
-          directData
-        );
-
-
-        /*
-         * Direct Cobalt success
-         */
-
-        if (
-
-          directData.status === "tunnel"
-
-          ||
-
-          directData.status === "redirect"
-
-        ) {
-
-          if (!directData.url) {
-
-            showMessage(t.noUrl);
-
-            return;
-
-          }
-
-
-          const filename =
-            directData.filename ||
-            "video.mp4";
-
-
-          document.getElementById("filename")
-            .textContent =
-            filename;
-
-
-          const downloadLink =
-            document.getElementById("downloadLink");
-
-
-          downloadLink.href =
-            directData.url;
-
-
-          downloadLink.download =
-            filename;
-
-
-          document.getElementById("result")
-            .style.display =
-            "block";
-
-
-          showMessage(
-            t.ready,
-            "success"
-          );
-
-
-          return;
-
-        }
-
-
-        /*
-         * Direct Cobalt error
-         */
-
-        if (directData.status === "error") {
-
-          const directError =
-            directData?.error?.code ||
-            "";
-
-
-          showMessage(
-            directError
-              ? t.cobaltError +
-                " (" +
-                directError +
-                ")"
-              : t.youtube
-          );
-
-          return;
-
-        }
-
-
-        showMessage(t.noUrl);
-
-        return;
-
-      } catch (directError) {
-
-        console.error(
-          "Direct Cobalt YouTube retry error:",
-          directError
-        );
-
-
-        showMessage(
-          t.youtube,
-          "error"
-        );
-
-        return;
-
-      }
+      return;
 
     }
 
@@ -1105,8 +1014,7 @@ async function downloadVideo() {
 
 
       document.getElementById("result")
-        .style.display =
-        "block";
+        .style.display = "block";
 
 
       showMessage(
@@ -1208,5 +1116,14 @@ document
 
       if (event.key === "Enter") {
 
-        do
-                                    
+        downloadVideo();
+
+      }
+
+    }
+  );
+
+</script>
+
+</body>
+</html>
