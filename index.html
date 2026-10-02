@@ -240,20 +240,10 @@
       color: #07111a;
       font-weight: 800;
       transition: .2s;
-      border: 0;
-      cursor: pointer;
-      font-size: 15px;
-      font-family: inherit;
     }
 
     .download-result:hover {
       transform: translateY(-2px);
-    }
-
-    .download-result:disabled {
-      opacity: .7;
-      cursor: wait;
-      transform: none;
     }
 
     .platforms {
@@ -428,14 +418,15 @@
 
       <div id="filename" class="filename"></div>
 
-      <button
+      <a
         id="downloadLink"
         class="download-result"
-        type="button"
-        onclick="downloadFileDirectly()"
+        href="#"
+        target="_blank"
+        rel="noopener noreferrer"
       >
         تنزيل الفيديو
-      </button>
+      </a>
 
     </div>
 
@@ -1014,21 +1005,11 @@ async function downloadVideo() {
         document.getElementById("downloadLink");
 
 
-      /*
-       * Store the Cobalt URL.
-       *
-       * The download button will first
-       * try a direct browser download.
-       *
-       * If that fails, it will automatically
-       * use the old Cobalt URL method.
-       */
-
-      downloadLink.dataset.url =
+      downloadLink.href =
         cobalt.url;
 
 
-      downloadLink.dataset.filename =
+      downloadLink.download =
         filename;
 
 
@@ -1122,181 +1103,6 @@ async function downloadVideo() {
 }
 
 
-/*
- * Direct download
- *
- * First tries to download the file directly.
- *
- * If the browser blocks it because of
- * CORS or another browser limitation,
- * automatically falls back to the
- * old method and opens the Cobalt URL.
- */
-
-async function downloadFileDirectly() {
-
-  const t =
-    translations[currentLanguage];
-
-
-  const downloadLink =
-    document.getElementById("downloadLink");
-
-
-  const url =
-    downloadLink.dataset.url;
-
-
-  const filename =
-    downloadLink.dataset.filename ||
-    "video.mp4";
-
-
-  if (!url) {
-
-    showMessage(t.noUrl);
-
-    return;
-
-  }
-
-
-  const originalText =
-    downloadLink.textContent;
-
-
-  downloadLink.disabled =
-    true;
-
-
-  downloadLink.style.opacity =
-    "0.7";
-
-
-  downloadLink.textContent =
-    currentLanguage === "ar"
-      ? "جاري التنزيل..."
-      : "Downloading...";
-
-
-  try {
-
-    /*
-     * Try direct browser download.
-     */
-
-    const response =
-      await fetch(
-
-        url,
-
-        {
-          method: "GET",
-          mode: "cors"
-        }
-
-      );
-
-
-    if (!response.ok) {
-
-      throw new Error(
-        "HTTP " + response.status
-      );
-
-    }
-
-
-    const blob =
-      await response.blob();
-
-
-    /*
-     * Create temporary local URL.
-     */
-
-    const blobUrl =
-      URL.createObjectURL(blob);
-
-
-    const a =
-      document.createElement("a");
-
-
-    a.href =
-      blobUrl;
-
-
-    a.download =
-      filename;
-
-
-    a.style.display =
-      "none";
-
-
-    document.body.appendChild(a);
-
-
-    a.click();
-
-
-    a.remove();
-
-
-    /*
-     * Release the temporary URL.
-     */
-
-    setTimeout(
-      () => {
-
-        URL.revokeObjectURL(
-          blobUrl
-        );
-
-      },
-      10000
-    );
-
-
-  } catch (error) {
-
-    console.warn(
-      "Direct download unavailable, using fallback:",
-      error
-    );
-
-
-    /*
-     * FALLBACK
-     *
-     * If the browser does not support
-     * direct downloading or CORS blocks
-     * the request, use the original method.
-     */
-
-    window.location.href =
-      url;
-
-  } finally {
-
-    downloadLink.disabled =
-      false;
-
-
-    downloadLink.style.opacity =
-      "";
-
-
-    downloadLink.textContent =
-      originalText;
-
-  }
-
-}
-
-
 
 /*
  * Allow pressing Enter
@@ -1308,4 +1114,16 @@ document
     "keydown",
     function(event) {
 
- 
+      if (event.key === "Enter") {
+
+        downloadVideo();
+
+      }
+
+    }
+  );
+
+</script>
+
+</body>
+  </html>
