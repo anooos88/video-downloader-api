@@ -1,101 +1,201 @@
+const COBALT_API_URL = "https://cobalt.anas.blitz.cloud/";
+
 export default {
-  async fetch(request) {
-    if (request.method === 'OPTIONS') {
-      return new Response(null, { 
-        headers: { 
-          'Access-Control-Allow-Origin': '*', 
-          'Access-Control-Allow-Methods': 'POST, OPTIONS', 
-          'Access-Control-Allow-Headers': 'Content-Type' 
-        } 
+  async fetch(request, env) {
+
+    // =========================
+    // CORS
+    // =========================
+
+    const corsHeaders = {
+      "Access-Control-Allow-Origin": "*",
+      "Access-Control-Allow-Methods": "POST, OPTIONS",
+      "Access-Control-Allow-Headers": "Content-Type, Authorization",
+      "Content-Type": "application/json"
+    };
+
+    // OPTIONS
+    if (request.method === "OPTIONS") {
+      return new Response(null, {
+        status: 204,
+        headers: corsHeaders
       });
+    }
+
+    // نسمح فقط بـ POST
+    if (request.method !== "POST") {
+      return new Response(
+        JSON.stringify({
+          error: "Only POST requests are allowed"
+        }),
+        {
+          status: 405,
+          headers: corsHeaders
+        }
+      );
     }
 
     try {
-      let body;
-      try {
-        body = await request.json();
-      } catch (err) {
-        return new Response(JSON.stringify({ error: 'البيانات المرسلة غير صالحة' }), { 
-          status: 400, 
-          headers: { 'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*' } 
-        });
+
+      // =========================
+      // قراءة البيانات
+      // =========================
+
+      const body = await request.json();
+
+      const targetUrl = body.url;
+      const quality = body.quality || "720";
+
+      if (!targetUrl) {
+        return new Response(
+          JSON.stringify({
+            error: "Missing video URL"
+          }),
+          {
+            status: 400,
+            headers: corsHeaders
+          }
+        );
       }
 
-      const url = body && body.url;
-      if (!url || typeof url !== 'string' || !url.startsWith('http')) {
-        return new Response(JSON.stringify({ error: 'الرجاء إدخال رابط صالح يبدأ بـ https://' }), { 
-          status: 400, 
-          headers: { 'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*' } 
-        });
+      // =========================
+      // طلب Cobalt
+      // =========================
+
+      const cobaltBody = {
+        url: targetUrl,
+
+        videoQuality: quality,
+
+        audioFormat: "best",
+        audioBitrate: "128",
+
+        filenameStyle: "pretty",
+
+        downloadMode: "auto",
+
+        youtubeVideoCodec: "h264",
+
+        alwaysProxy: false,
+
+        disableMetadata: false,
+
+        tiktokFullAudio: false,
+
+        tiktokH265: false,
+
+        twitterGif: true,
+
+        youtubeHLS: false
+      };
+
+      const headers = {
+        "Content-Type": "application/json"
+      };
+
+      // إذا أضفت API Key مستقبلًا
+      if (env.COBALT_API_KEY) {
+        headers["Authorization"] =
+          `Api-Key ${env.COBALT_API_KEY}`;
       }
 
-      // استخدام خدمة بديلة وموثوقة لاستخراج تفاصيل الفيديو
-      const apiRes = await fetch(`https://co.wuk.sh/api/json`, {
-        method: 'POST',
-        headers: { 
-          'Accept': 'application/json', 
-          'Content-Type': 'application/json',
-          'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64)'
-        },
-        body: JSON.stringify({ url: url })
-      });
+      // =========================
+      // إرسال الطلب إلى Cobalt
+      // =========================
 
-      const responseText = await apiRes.text();
-      
-      if (!responseText.trim().startsWith('{')) {
-        // محاولة الاتصال بخدمة وسيطة ثانية احتياطية إذا توقفت الأولى
-        const backupRes = await fetch(`https://api.cobalt.tools/api/json`, {
-          method: 'POST',
-          headers: { 'Accept': 'application/json', 'Content-Type': 'application/json' },
-          body: JSON.stringify({ url: url })
-        });
-        const backupText = await backupRes.text();
-        if (backupText.trim().startsWith('{')) {
-          const data = JSON.parse(backupText);
-          return formatResponse(data);
+      const cobaltResponse = await fetch(
+        COBALT_API_URL,
+        {
+          method: "POST",
+          headers,
+          body: JSON.stringify(cobaltBody)
         }
-        
-        return new Response(JSON.stringify({ error: 'عذراً، الخوادم الخارجية محظورة أو متوقفة مؤقتاً لهذا الرابط.' }), { 
-          status: 502, 
-          headers: { 'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*' } 
-        });
+      );
+
+      // =========================
+      // قراءة استجابة Cobalt
+      // =========================
+
+      const text = await cobaltResponse.text();
+
+      let data;
+
+      try {
+        data = JSON.parse(text);
+      } catch {
+        return new Response(
+          JSON.stringify({
+            error: "Cobalt returned invalid JSON",
+            status: cobaltResponse.status,
+            response: text
+          }),
+          {
+            status: 502,
+            headers: corsHeaders
+          }
+        );
       }
 
-      const data = JSON.parse(responseText);
-      return formatResponse(data);
+      // =========================
+      // أخطاء Cobalt
+      // =========================
 
-    } catch (e) {
-      return new Response(JSON.stringify({ error: 'خطأ في الخادم: ' + e.message }), { 
-        status: 500, 
-        headers: { 'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*' } 
-      });
+      if (!cobaltResponse.ok) {
+
+        return new Response(
+          JSON.stringify({
+            error: "Cobalt API error",
+            cobaltStatus: cobaltResponse.status,
+            cobaltResponse: data
+          }),
+          {
+            status: 502,
+            headers: corsHeaders
+          }
+        );
+      }
+
+      if (data.status === "error") {
+
+        return new Response(
+          JSON.stringify({
+            error: "Cobalt processing error",
+            cobalt: data
+          }),
+          {
+            status: 502,
+            headers: corsHeaders
+          }
+        );
+      }
+
+      // =========================
+      // نجاح
+      // =========================
+
+      return new Response(
+        JSON.stringify({
+          success: true,
+          cobalt: data
+        }),
+        {
+          status: 200,
+          headers: corsHeaders
+        }
+      );
+
+    } catch (error) {
+
+      return new Response(
+        JSON.stringify({
+          error: "Worker error",
+          message: error.message
+        }),
+        {
+          status: 500,
+          headers: corsHeaders
+        }
+      );
     }
   }
 };
-
-function formatResponse(data) {
-  if (data.status === 'error') {
-    return new Response(JSON.stringify({ error: data.text || 'فشل جلب الفيديو.' }), { 
-      status: 400, 
-      headers: { 'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*' } 
-    });
-  }
-
-  let formats = [];
-  if (data.url) {
-    formats.push({ resolution: 'تحميل مباشر (HD)', url: data.url });
-  }
-  if (data.picker && Array.isArray(data.picker)) {
-    formats = data.picker.map(i => ({ 
-      resolution: i.quality || 'جودة عالية', 
-      url: i.url 
-    }));
-  }
-
-  return new Response(JSON.stringify({
-    title: data.filename || data.title || 'فيديو جاهز للتحميل',
-    formats: formats
-  }), { 
-    headers: { 'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*' } 
-  });
-        }
