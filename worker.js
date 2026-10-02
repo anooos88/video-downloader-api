@@ -14,7 +14,10 @@ export default {
       "Content-Type": "application/json"
     };
 
+    // =========================
     // OPTIONS
+    // =========================
+
     if (request.method === "OPTIONS") {
       return new Response(null, {
         status: 204,
@@ -22,7 +25,10 @@ export default {
       });
     }
 
-    // نسمح فقط بـ POST
+    // =========================
+    // POST فقط
+    // =========================
+
     if (request.method !== "POST") {
       return new Response(
         JSON.stringify({
@@ -38,10 +44,24 @@ export default {
     try {
 
       // =========================
-      // قراءة البيانات
+      // قراءة الطلب
       // =========================
 
-      const body = await request.json();
+      let body;
+
+      try {
+        body = await request.json();
+      } catch {
+        return new Response(
+          JSON.stringify({
+            error: "Invalid JSON"
+          }),
+          {
+            status: 400,
+            headers: corsHeaders
+          }
+        );
+      }
 
       const targetUrl = body.url;
       const quality = body.quality || "720";
@@ -59,7 +79,7 @@ export default {
       }
 
       // =========================
-      // طلب Cobalt
+      // Cobalt request
       // =========================
 
       const cobaltBody = {
@@ -74,28 +94,37 @@ export default {
 
         downloadMode: "auto",
 
-        youtubeVideoCodec: "h264",
+        disableMetadata: false,
 
         alwaysProxy: false,
 
-        disableMetadata: false,
+        localProcessing: "disabled",
 
+        // YouTube
+        youtubeVideoCodec: "h264",
+        youtubeVideoContainer: "mp4",
+        youtubeHLS: false,
+
+        // TikTok
         tiktokFullAudio: false,
+        allowH265: false,
 
-        tiktokH265: false,
-
-        twitterGif: true,
-
-        youtubeHLS: false
+        // Twitter
+        convertGif: true
       };
 
-      const headers = {
+      // =========================
+      // Headers المطلوبة رسميًا
+      // =========================
+
+      const cobaltHeaders = {
+        "Accept": "application/json",
         "Content-Type": "application/json"
       };
 
-      // إذا أضفت API Key مستقبلًا
+      // API Key اختياري
       if (env.COBALT_API_KEY) {
-        headers["Authorization"] =
+        cobaltHeaders["Authorization"] =
           `Api-Key ${env.COBALT_API_KEY}`;
       }
 
@@ -107,27 +136,30 @@ export default {
         COBALT_API_URL,
         {
           method: "POST",
-          headers,
+          headers: cobaltHeaders,
           body: JSON.stringify(cobaltBody)
         }
       );
 
       // =========================
-      // قراءة استجابة Cobalt
+      // قراءة الاستجابة
       // =========================
 
-      const text = await cobaltResponse.text();
+      const responseText =
+        await cobaltResponse.text();
 
-      let data;
+      let cobaltData;
 
       try {
-        data = JSON.parse(text);
+        cobaltData =
+          JSON.parse(responseText);
       } catch {
+
         return new Response(
           JSON.stringify({
             error: "Cobalt returned invalid JSON",
-            status: cobaltResponse.status,
-            response: text
+            cobaltStatus: cobaltResponse.status,
+            response: responseText
           }),
           {
             status: 502,
@@ -137,7 +169,7 @@ export default {
       }
 
       // =========================
-      // أخطاء Cobalt
+      // Cobalt error
       // =========================
 
       if (!cobaltResponse.ok) {
@@ -146,7 +178,7 @@ export default {
           JSON.stringify({
             error: "Cobalt API error",
             cobaltStatus: cobaltResponse.status,
-            cobaltResponse: data
+            cobaltResponse: cobaltData
           }),
           {
             status: 502,
@@ -155,12 +187,16 @@ export default {
         );
       }
 
-      if (data.status === "error") {
+      // =========================
+      // Cobalt status = error
+      // =========================
+
+      if (cobaltData.status === "error") {
 
         return new Response(
           JSON.stringify({
             error: "Cobalt processing error",
-            cobalt: data
+            cobalt: cobaltData
           }),
           {
             status: 502,
@@ -176,7 +212,7 @@ export default {
       return new Response(
         JSON.stringify({
           success: true,
-          cobalt: data
+          cobalt: cobaltData
         }),
         {
           status: 200,
@@ -185,6 +221,10 @@ export default {
       );
 
     } catch (error) {
+
+      // =========================
+      // Worker error
+      // =========================
 
       return new Response(
         JSON.stringify({
